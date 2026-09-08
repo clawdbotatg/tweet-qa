@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root { color-scheme: light dark; }
+  body { width: 340px; margin: 0; padding: 14px; font: 14px/1.4 -apple-system, system-ui, sans-serif; }
+  .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .top b { font-size: 15px; }
+  .seg { display: inline-flex; border: 1px solid #8884; border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; background: transparent; padding: 4px 10px; font: inherit; font-size: 12px; cursor: pointer; color: inherit; }
+  .seg button.on { background: #1d9bf0; color: #fff; }
+  #status { padding: 12px; border-radius: 10px; background: #8881; }
+  #status.working { color: #888; }
+  #status.good { background: #16a34a22; }
+  #status.bad { background: #dc262622; }
+  #status.err { background: #f59e0b22; }
+  ul { margin: 8px 0 0 18px; padding: 0; }
+  li { margin: 3px 0; }
+  pre { white-space: pre-wrap; word-break: break-word; background: #8881; padding: 8px; border-radius: 8px; font: inherit; margin: 10px 0 0; }
+  .row { display: flex; gap: 8px; margin-top: 10px; }
+  .btn { flex: 1; padding: 8px; border: 0; border-radius: 999px; font: inherit; font-weight: 600; cursor: pointer; }
+  .btn.primary { background: #1d9bf0; color: #fff; }
+  .btn.ghost { background: #8882; color: inherit; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .dim { color: #888; font-size: 12px; margin-top: 8px; }
+  .spin { display: inline-block; width: 12px; height: 12px; border: 2px solid #8884; border-top-color: #1d9bf0; border-radius: 50%; animation: s .8s linear infinite; vertical-align: -2px; margin-right: 6px; }
+  @keyframes s { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+  <div class="top">
+    <b>Tweet QA</b>
+    <div class="seg" id="engine">
+      <button data-e="claude">Fable</button>
+      <button data-e="codex">GPT</button>
+    </div>
+  </div>
+  <div id="status" class="working"><span class="spin"></span>Reading the page…</div>
+  <div id="detail"></div>
+  <script src="page.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
