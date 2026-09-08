@@ -1,13 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Tweet QA",
-  "version": "0.1.0",
-  "description": "One click: ask Fable (Claude) or GPT (Codex) if your drafted tweet has any glaring mistakes.",
+  "version": "0.2.0",
+  "description": "One click: ask Fable (Claude) or GPT (Codex) if your drafted tweet has any glaring mistakes. Works on the X composer, Media Studio, or any selected text / text box.",
   "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": ["http://127.0.0.1:8793/*"],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Tweet QA — check this draft",
+    "default_title": "Tweet QA — check this draft (composer, selection, or text box)",
     "default_icon": { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" }
   },
   "icons": { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" }
