@@ -1,6 +1,6 @@
 # HANDOFF — tweet-qa
 
-Last updated 2026-09-08 by Claude (Fable 5.1) in a harness session.
+Last updated 2026-09-09 by Claude (Fable 5.1) in a harness session.
 
 ## State
 
@@ -11,6 +11,8 @@ Last updated 2026-09-08 by Claude (Fable 5.1) in a harness session.
   - Bridge running as launchd agent `com.clawd.tweetqa` (plist installed to
     `~/Library/LaunchAgents/`, log at `~/.tweet-qa/bridge.log`), listening on
     `127.0.0.1:8793`. Reinstall/restart with `sh bridge/install.sh`.
+    **Installed for the `austingriffith` user on 2026-09-09** (the 09-08 install was
+    under a different user account, so Chrome's popup saw "Bridge not running").
   - The Chrome extension has **NOT** been loaded into Chrome yet. Austin has to:
     `chrome://extensions` → Developer mode → Load unpacked →
     `/Users/clawd/clawd-harness/projects/tweet-qa/extension`, then pin it.
@@ -52,6 +54,21 @@ load/reload the unpacked extension (manifest version bumped, so a reload at
 `chrome://extensions` is required if it was already loaded).
 
 ## Gotchas
+
+- **launchd env (2026-09-09).** `claude -p` under launchd said "Not logged in" even
+  though it works from a shell. Two vars are needed and the plist now sets both:
+  `USER` (claude finds its Keychain credentials by user; launchd doesn't set it) and
+  `CLAUDE_CONFIG_DIR` (this Mac's logins live in `~/.clawd-accounts/<name>`, not
+  `~/.claude`). `install.sh` bakes in the installing shell's `CLAUDE_CONFIG_DIR`
+  (falls back to `~/.claude`) and prints which one — currently `ef`. To switch
+  accounts: `CLAUDE_CONFIG_DIR=~/.clawd-accounts/<name> sh bridge/install.sh`.
+  Working accounts at install time: clawd, ef, sub4 (others: expired OAuth or spend
+  limit). Symptom in the popup was "claude exited 1:" with nothing after the colon;
+  the bridge now reports claude's own message ("Not logged in", "OAuth session
+  expired", spend limit) instead.
+- The bridge scrubs `ANTHROPIC_BASE_URL` too: a harness shell points it at a
+  per-session tee proxy, and `bridge.py --once` from such a shell would route
+  through it.
 
 - Port 8791 was taken by an unrelated Python process on this Mac, hence **8793**.
   The port is hardcoded in three places: `bridge/bridge.py`, `extension/manifest.json`

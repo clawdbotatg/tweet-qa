@@ -44,7 +44,8 @@ Respond with ONLY a JSON object, no prose, no code fences:
 def _scrubbed_env():
     env = dict(os.environ)
     for k in list(env):
-        if k == "CLAUDECODE" or k.startswith("CLAUDE_CODE_") or k == "ANTHROPIC_API_KEY":
+        # ANTHROPIC_BASE_URL: a harness shell points it at a per-session tee proxy; never inherit that.
+        if k in ("CLAUDECODE", "ANTHROPIC_API_KEY", "ANTHROPIC_BASE_URL") or k.startswith("CLAUDE_CODE_"):
             env.pop(k, None)
     return env
 
@@ -54,11 +55,16 @@ def run_claude(prompt):
            "--tools", "", "--no-session-persistence"]
     p = subprocess.run(cmd, input=prompt, capture_output=True, text=True,
                        timeout=TIMEOUT_S, cwd=WORKDIR, env=_scrubbed_env())
-    if p.returncode != 0:
-        raise RuntimeError(f"claude exited {p.returncode}: {p.stderr.strip()[-400:]}")
-    data = json.loads(p.stdout)
-    if data.get("is_error"):
-        raise RuntimeError(f"claude error: {data.get('result')}")
+    try:
+        data = json.loads(p.stdout)
+    except ValueError:
+        data = None
+    if data is not None and data.get("is_error"):
+        # e.g. "Not logged in" / "OAuth session expired" / spend limit — the useful message is here,
+        # not on stderr (claude exits 1 with an empty stderr for these).
+        raise RuntimeError(f"claude: {data.get('result')}")
+    if p.returncode != 0 or data is None:
+        raise RuntimeError(f"claude exited {p.returncode}: {p.stderr.strip()[-400:] or p.stdout.strip()[-400:]}")
     return data.get("result", ""), CLAUDE_MODEL
 
 
