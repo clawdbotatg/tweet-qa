@@ -9,9 +9,11 @@
   <key>EnvironmentVariables</key><dict>
     <key>PATH</key><string>$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
     <key>HOME</key><string>$HOME</string>
+    <!-- claude finds its Keychain login by $USER; launchd does not set it -->
     <key>USER</key><string>$USER</string>
     <key>LOGNAME</key><string>$USER</string>
-    <key>CLAUDE_CONFIG_DIR</key><string>$CLAUDE_CONFIG_DIR</string>
+    <!-- optional pin: first login to try; empty = auto-discover ~/.clawd-accounts/* then ~/.claude -->
+    <key>TWEET_QA_CLAUDE_CONFIG_DIR</key><string>$CLAUDE_CONFIG_DIR</string>
   </dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>

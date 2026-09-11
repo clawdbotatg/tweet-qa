@@ -3,10 +3,12 @@
 set -e
 cd "$(dirname "$0")"
 mkdir -p ~/.tweet-qa ~/Library/LaunchAgents
-# Which claude login the bridge uses: the installing shell's CLAUDE_CONFIG_DIR, else ~/.claude.
-# USER is required too — claude finds its Keychain credentials by user, and launchd doesn't set it.
-CFG="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
-echo "claude config dir: $CFG"
+# USER is required — claude finds its Keychain credentials by user, and launchd doesn't set it.
+# CLAUDE_CONFIG_DIR from the installing shell (if any) becomes the first login the bridge tries;
+# the bridge auto-discovers logged-in dirs under ~/.clawd-accounts/* and ~/.claude and fails over
+# to the next one when a login is walled (spend/usage limit, logged out).
+CFG="${CLAUDE_CONFIG_DIR:-}"
+echo "claude config dir pin: ${CFG:-(none, auto-discover)}"
 sed "s|\$PWD|$(cd .. && pwd)|g; s|\$HOME|$HOME|g; s|\$USER|$(id -un)|g; s|\$CLAUDE_CONFIG_DIR|$CFG|g" com.clawd.tweetqa.plist > ~/Library/LaunchAgents/com.clawd.tweetqa.plist
 launchctl bootout gui/$(id -u)/com.clawd.tweetqa 2>/dev/null || true
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.clawd.tweetqa.plist

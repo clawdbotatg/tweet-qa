@@ -1,6 +1,6 @@
 # HANDOFF — tweet-qa
 
-Last updated 2026-09-09 by Claude (Fable 5.1) in a harness session.
+Last updated 2026-09-11 by Claude (Fable 5.1) in a harness session.
 
 ## State
 
@@ -11,8 +11,11 @@ Last updated 2026-09-09 by Claude (Fable 5.1) in a harness session.
   - Bridge running as launchd agent `com.clawd.tweetqa` (plist installed to
     `~/Library/LaunchAgents/`, log at `~/.tweet-qa/bridge.log`), listening on
     `127.0.0.1:8793`. Reinstall/restart with `sh bridge/install.sh`.
-    **Installed for the `austingriffith` user on 2026-09-09** (the 09-08 install was
-    under a different user account, so Chrome's popup saw "Bridge not running").
+    Reinstalled 2026-09-11 with the login failover below. (A 09-09 note claimed the
+    bridge had been installed under a different macOS user; `/Users` has only `clawd`,
+    so the "Bridge not running" seen then was something else — most likely the
+    installer's bootout/bootstrap restart race, which shows up in `bridge.log` as
+    "Address already in use" tracebacks and self-heals via KeepAlive.)
   - The Chrome extension has **NOT** been loaded into Chrome yet. Austin has to:
     `chrome://extensions` → Developer mode → Load unpacked →
     `/Users/clawd/clawd-harness/projects/tweet-qa/extension`, then pin it.
@@ -53,19 +56,37 @@ whole textarea, contenteditable span, biggest-box fallback, composer precedence)
 load/reload the unpacked extension (manifest version bumped, so a reload at
 `chrome://extensions` is required if it was already loaded).
 
+## 0.2.1 (2026-09-11): "claude exited 1:" fixed
+
+The popup showed `claude exited 1:` with nothing after the colon. Two causes, both in
+how the launchd agent runs `claude`:
+
+1. **launchd sets no `USER`**, and claude looks up its keychain login by `$USER`, so
+   every config dir reported "Not logged in · Please run /login". The plist now sets
+   `USER` (`install.sh` substitutes it). Symptom to remember: `claude auth status`
+   says logged in from a shell but not from launchd.
+2. With `USER` set, claude's default `~/.claude` login **is** found, but that account
+   has hit its monthly spend limit. The bridge now resolves an ordered list of logged-in
+   config dirs (`TWEET_QA_CLAUDE_CONFIG_DIR` → `~/.clawd-accounts/*` → `~/.claude`) via
+   `claude auth status`, and on a limit/login wall fails over to the next one and stays
+   there. It logs the list and every failover to `bridge.log`.
+
+The error message was blank because claude puts the reason in the JSON `result` on
+stdout and leaves stderr empty; `run_claude` now surfaces stdout first.
+
 ## Gotchas
 
 - **launchd env (2026-09-09).** `claude -p` under launchd said "Not logged in" even
   though it works from a shell. Two vars are needed and the plist now sets both:
   `USER` (claude finds its Keychain credentials by user; launchd doesn't set it) and
-  `CLAUDE_CONFIG_DIR` (this Mac's logins live in `~/.clawd-accounts/<name>`, not
-  `~/.claude`). `install.sh` bakes in the installing shell's `CLAUDE_CONFIG_DIR`
-  (falls back to `~/.claude`) and prints which one — currently `ef`. To switch
-  accounts: `CLAUDE_CONFIG_DIR=~/.clawd-accounts/<name> sh bridge/install.sh`.
-  Working accounts at install time: clawd, ef, sub4 (others: expired OAuth or spend
-  limit). Symptom in the popup was "claude exited 1:" with nothing after the colon;
-  the bridge now reports claude's own message ("Not logged in", "OAuth session
-  expired", spend limit) instead.
+  a login dir (this Mac's logins live in `~/.clawd-accounts/<name>`, not `~/.claude`).
+  Since 09-11 the dir is no longer a hard pin: `install.sh` passes the installing
+  shell's `CLAUDE_CONFIG_DIR` (if any) as `TWEET_QA_CLAUDE_CONFIG_DIR`, the first
+  login to try; the bridge then fails over as described in 0.2.1. Note the 09-09
+  fix never reached the running process: this checkout was still at 0.2.0 on disk
+  (launchd runs `bridge.py` straight from the working tree), which is why the popup
+  kept showing the blank "claude exited 1:" — **after `git pull`, rerun
+  `sh bridge/install.sh`**, or the box keeps serving the old file.
 - The bridge scrubs `ANTHROPIC_BASE_URL` too: a harness shell points it at a
   per-session tee proxy, and `bridge.py --once` from such a shell would route
   through it.
