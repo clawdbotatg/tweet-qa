@@ -14,8 +14,11 @@ Both engines run through their CLIs, so this bills your subscriptions, not an AP
 
 - `extension/` — Manifest V3 Chrome extension. Popup does all the work: finds the
   text (see below), POSTs to the bridge, shows the verdict, and on Apply replaces
-  the text in place with `execCommand('insertText')` (React-safe fallbacks for
-  textareas, synthetic paste for rich editors).
+  the text in place: `execCommand('insertText')` for textareas (native-setter
+  fallback for React), and for rich editors a select-all + synthetic paste that
+  the editor rebuilds into proper blocks (plain contenteditables fall back to
+  insertText). Contenteditable text is read by walking blocks/`<br>`s, not
+  `innerText`, which doubles blank lines.
 - `bridge/bridge.py` — stdlib-only localhost HTTP server on **127.0.0.1:8793**.
   `POST /check {"engine":"claude"|"codex","text":...}` shells out to
   `claude -p --model claude-fable-5-1` or `codex exec` (codex's default model,
@@ -72,6 +75,9 @@ odd UI you can select the draft and click the icon.
   (Chrome kills popup scripts on close).
 - If a check finds several composer boxes (a thread), it checks the focused one,
   else the first non-empty one.
-- The Apply path was verified against X's Draft.js composer on 2026-09-08, and
-  the textarea / selection / contenteditable paths against a scratch page the
-  same day (detection also verified read-only on a live Media Studio draft).
+- The Apply path was re-verified against X's Draft.js composer on 2026-09-12
+  with multi-line drafts (blank lines, hashtags, links, emoji), and the
+  textarea / selection / contenteditable paths against a scratch page the same
+  day (detection also verified read-only on a live Media Studio draft).
+- If Apply ever reports the box reads differently, ⌘Z on the page undoes the
+  attempt (rich editors treat it as one paste).

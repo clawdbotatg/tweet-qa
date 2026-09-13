@@ -1,6 +1,6 @@
 # HANDOFF — tweet-qa
 
-Last updated 2026-09-11 by Claude (Fable 5.1) in a harness session.
+Last updated 2026-09-12 by Claude (Fable 5.1) in a harness session.
 
 ## State
 
@@ -73,6 +73,41 @@ how the launchd agent runs `claude`:
 
 The error message was blank because claude puts the reason in the JSON `result` on
 stdout and leaves stderr empty; `run_claude` now surfaces stdout first.
+
+## 0.3.0 (2026-09-12): Apply fix mangled multi-line tweets
+
+Austin: after Apply on the X composer every line break was doubled and the fixed
+tweet sat *inside* the old one. Reproduced on the live x.com composer via the
+clawd-browser bridge (port 8765; `open` a `https://x.com/compose/post` tab, type
+with `type`/`key Enter`, `eval` page.js's functions, never touch Post). Two bugs:
+
+1. **Read.** `innerText` of a contenteditable gives `\n\n\n` for a blank line
+   (`<div><br></div>` and Draft.js's `<div><div><span><br>`), so the model got
+   doubled gaps and faithfully kept them. `readDraft`/`writeDraft` now share an
+   `editableText` walker (one line per block, one per `<br>`, a trailing `<br>`
+   closes its block's line, `display:none` skipped, inter-block whitespace dropped).
+2. **Write.** `selectAll` + `execCommand('insertText', text-with-newlines)` on
+   Draft.js put the whole text into ONE block as soft breaks and left the old
+   blocks underneath; the verify read then failed and the old fallback fired a
+   synthetic paste *at the cursor* on top of that → duplicate tweet. `writeDraft`
+   is now async (`executeScript` awaits it): select-all → wait 120 ms so Draft.js
+   syncs its selection from `selectionchange` (which is a later task — paste
+   before that inserts at the stale cursor) → synthetic `paste` with `text/plain`
+   → poll up to 1.5 s for the re-render. Only if the box still reads exactly as
+   before (plain contenteditables ignore untrusted paste) does it re-select and
+   insertText. Never two mutations on one box.
+
+Verified 2026-09-12: three X-composer drafts (blank line; single line with
+@mention; two blank lines + link + emoji) read exactly, wrote exactly, screenshot
+clean; textarea / plain contenteditable / inline-`<br>` contenteditable / selection
+in textarea / selection in contenteditable / read-only page selection on a scratch
+`about:blank` tab; and one real `/check` round trip where Fable preserved the blank
+line. Still not driven through the real popup click (chrome:// is off-limits to the
+bridge) — the injected functions ran via page `eval`, same DOM, main world instead of
+the isolated one. Manifest bumped to 0.3.0 → **reload at `chrome://extensions`**.
+
+Bridge-driving gotcha: a compose tab with a draft hangs `navigate`/the first
+`close_tab` (X's leave-page prompt); `close_tab` twice, and open a fresh tab per case.
 
 ## Gotchas
 

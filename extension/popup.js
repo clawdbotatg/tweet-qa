@@ -107,7 +107,7 @@ async function apply() {
       setStatus('good', draft.source === 'selection' ? '✅ Selected text replaced on the page.' : '✅ Text updated on the page.');
       $detail.innerHTML = `<pre>${esc(r.text)}</pre><div class="row"><button class="btn ghost" id="again">Check again</button></div>`;
     } else {
-      setStatus('err', 'Tried to update but the box reads differently. Copy the fix instead.');
+      setStatus('err', 'Tried to update but the box reads differently. Press ⌘Z on the page to undo, then copy the fix instead.');
       $detail.innerHTML = `<pre>${esc(verdict.suggested)}</pre><div class="row"><button class="btn primary" id="copy">Copy fix</button></div>`;
     }
     wireButtons();
