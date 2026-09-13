@@ -1,6 +1,6 @@
 # HANDOFF — tweet-qa
 
-Last updated 2026-09-12 by Claude (Fable 5.1) in a harness session.
+Last updated 2026-09-13 by Claude (Fable 5.1) in a harness session.
 
 ## State
 
@@ -108,6 +108,24 @@ the isolated one. Manifest bumped to 0.3.0 → **reload at `chrome://extensions`
 
 Bridge-driving gotcha: a compose tab with a draft hangs `navigate`/the first
 `close_tab` (X's leave-page prompt); `close_tab` twice, and open a fresh tab per case.
+
+## 0.3.1 (2026-09-13): "Failed to authenticate: OAuth session expired" surfaced instead of failing over
+
+Popup showed `⚠️ claude: Failed to authenticate: OAuth session expired and could not be
+refreshed`. Transient: the pinned `slop` login's token had lapsed (the Mac had rebooted that
+morning) and by the time it was looked at every login answered again. The bug was that the
+failover regex only knew `limit|not logged in|/login`, so an auth error went straight to the
+popup with four working logins untried. `_LIMIT_RE` now also matches authenticate / oauth /
+expired / unauthorized / 401 / 403, and when *every* login fails the discovered list is
+forgotten so the next request re-scans (a `claude /login` done since boot gets picked up
+without a bridge restart). Verified by monkeypatching the exact error into the first dir
+(failed over to the second), all dirs (clear message, list reset), and a non-auth error
+(still surfaced). Reinstalled with `CLAUDE_CONFIG_DIR=~/.clawd-accounts/slop sh
+bridge/install.sh` — keep that pin when reinstalling, or the installing shell's own login
+becomes the pin — and confirmed on the running process (`ps eww`) plus a live `/check`.
+
+Probe gotcha: `CLAUDE_CONFIG_DIR` with a trailing slash reads as a *different* (logged-out)
+config dir — claude hashes the path string for its Keychain entry. Never add the slash.
 
 ## Gotchas
 

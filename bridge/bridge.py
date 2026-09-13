@@ -70,7 +70,10 @@ def _logged_in(config_dir):
 
 _CLAUDE_DIRS = None   # ordered candidates, resolved once; _CLAUDE_IDX = the one currently in use
 _CLAUDE_IDX = 0
-_LIMIT_RE = re.compile(r"limit|not logged in|/login", re.I)
+# Anything that means "this login can't serve right now": spend/usage limit, logged out, or an
+# OAuth token that expired and failed to refresh ("Failed to authenticate: OAuth session expired
+# and could not be refreshed", 2026-09-13). All of these are per-login; the next one usually works.
+_LIMIT_RE = re.compile(r"limit|not logged in|/login|authenticat|oauth|expired|unauthori[sz]ed|\b40[13]\b", re.I)
 
 
 def _claude_dirs():
@@ -118,8 +121,11 @@ def _run_claude_in(prompt, cfg):
 
 
 def run_claude(prompt):
-    """Run in the current config dir; on a limit/login wall, fail over to the next logged-in one."""
-    global _CLAUDE_IDX
+    """Run in the current config dir; on a limit/login/auth wall, fail over to the next logged-in one.
+
+    The dir list is discovered once; if every dir fails it is forgotten so the next request
+    re-discovers (a login fixed with `claude /login` since boot then gets picked up)."""
+    global _CLAUDE_IDX, _CLAUDE_DIRS
     dirs = _claude_dirs()
     errors = []
     for _ in range(len(dirs)):
@@ -132,7 +138,9 @@ def run_claude(prompt):
             print(f"claude walled in {cfg or '~/.claude'}: {e}", file=sys.stderr, flush=True)
             errors.append(f"{os.path.basename(cfg) or '~/.claude'}: {e}")
             _CLAUDE_IDX = (_CLAUDE_IDX + 1) % len(dirs)
-    raise RuntimeError("every claude login is walled — " + " | ".join(errors))
+    _CLAUDE_DIRS = None
+    raise RuntimeError("every claude login is walled (re-login one with `claude /login`, or use GPT) — "
+                       + " | ".join(errors))
 
 
 def run_codex(prompt):
