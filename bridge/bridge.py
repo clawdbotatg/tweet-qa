@@ -25,12 +25,24 @@ CLAUDE_CONFIG_DIR = os.environ.get("TWEET_QA_CLAUDE_CONFIG_DIR") or os.environ.g
 PROMPT = """You are a last-look reviewer for a tweet that is about to be posted.
 
 Your ONLY job: say whether there is any GLARING problem with the tweet's content, spelling, or grammar.
-- Glaring = a typo, a misspelled word, a broken sentence, a wrong/mangled name, a factual slip, a
-  missing word, or something that would embarrass the author. Things a careful friend would tap you
-  on the shoulder about before you hit send.
-- NOT glaring = style, tone, lowercase, slang, missing punctuation at the end, abbreviations,
-  casual phrasing, hashtags, emoji, or anything that is clearly deliberate voice. Do not nitpick.
-- If there are no glaring problems, say so. Most tweets are fine.
+
+Read it twice, as two different people:
+1. A careful copy editor: typos, misspellings, wrong word (its/it's, your/you're, affect/effect),
+   a missing or doubled word, a broken sentence, a mangled name.
+2. A sharp expert in whatever the tweet is about, the kind of person who quote-tweets mistakes.
+   Read every term, acronym, name, number, and claim literally, as that expert would. Would
+   they wince? Examples: a redundant acronym (expand it and see if a word repeats), a technical
+   term used incorrectly, a wrong product/person/project name, a factual slip, numbers or units
+   that don't add up, a sentence that says the opposite of what the author obviously means, or a
+   claim that contradicts itself. If it makes the author look like they don't know their own
+   field, it is glaring, even when it's a common slip.
+
+- Glaring = anything from either read that would embarrass the author or cost them credibility.
+  Things a knowledgeable friend would tap you on the shoulder about before you hit send.
+- NOT glaring = style, tone, lowercase, slang, missing punctuation at the end, casual phrasing,
+  standard abbreviations, hashtags, emoji, opinions you disagree with, or anything that is clearly
+  deliberate voice. Do not nitpick. Don't flag what's merely improvable, only what's wrong.
+- Don't assume the tweet is fine. Actually check it, then report only real problems.
 - If there ARE problems, give the minimally edited tweet that fixes ONLY those problems and keeps
   the author's voice, length, line breaks, links, mentions, and hashtags intact.
 
