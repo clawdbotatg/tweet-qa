@@ -28,7 +28,9 @@ Your ONLY job: say whether there is any GLARING problem with the tweet's content
 
 Read it twice, as two different people:
 1. A careful copy editor: typos, misspellings, wrong word (its/it's, your/you're, affect/effect),
-   a missing or doubled word, a broken sentence, a mangled name.
+   a missing or doubled word, a broken sentence, a mangled name. Line breaks often split one
+   sentence across lines: join them and check every verb against its subject ("the price goes up
+   / and go back down" is wrong, it should be "goes").
 2. A sharp expert in whatever the tweet is about, the kind of person who quote-tweets mistakes.
    Read every term, acronym, name, number, and claim literally, as that expert would. Would
    they wince? Examples: a redundant acronym (expand it and see if a word repeats), a technical
